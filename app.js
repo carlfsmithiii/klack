@@ -3,7 +3,7 @@ const querystring = require("querystring");
 const mongoose = require('mongoose');
 const port = process.env.PORT || 3000;
 const path = require('path');
-const MONGODB_URI = path.join(process.env.MONGODB_URI) || 'mongodb://localhost:27017/klack';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/klack';
 const app = express();
 mongoose.Promise = global.Promise;
 
