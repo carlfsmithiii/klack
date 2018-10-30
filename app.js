@@ -5,6 +5,7 @@ const port = process.env.PORT || 3000;
 const path = require('path');
 const MONGODB_URI = path.join(process.env.MONGODB_URI, 'klack') || 'mongodb://localhost:27017/klack';
 const app = express();
+mongoose.Promise = global.Promise;
 
 
 mongoose.connect(MONGODB_URI, {useNewUrlParser: true});
