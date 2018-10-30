@@ -1,7 +1,7 @@
 const express = require("express");
 const querystring = require("querystring");
 const mongoose = require('mongoose');
-const port = 3000;
+const port = process.env.PORT || 3000;
 const path = require('path');
 const MONGODB_URI = path.join(process.env.MONGODB_URI, 'klack') || 'mongodb://localhost:27017/klack';
 const app = express();
