@@ -1,7 +1,15 @@
 const express = require("express");
 const querystring = require("querystring");
+const mongoose = require('mongoose');
 const port = 3000;
+const path = require('path');
+const MONGODB_URI = path.join(process.env.MONGODB_URI, 'klack') || 'mongodb://localhost:27017/klack';
 const app = express();
+
+
+mongoose.connect(MONGODB_URI, {useNewUrlParser: true});
+
+const { Message } = require('./models/message');
 
 // List of all messages
 let messages = [];
@@ -56,15 +64,21 @@ app.post("/messages", (request, response) => {
   const timestamp = Date.now();
   request.body.timestamp = timestamp;
 
+  console.log('/messages post body: ');
+  console.log(request.body);
   // append the new message to the message list
   messages.push(request.body);
+  const message = new Message(request.body);
+  console.log('message', message);
+  message.save().then((doc) => response.status(201).send(doc));
+
 
   // update the posting user's last access timestamp (so we know they are active)
   users[request.body.sender] = timestamp;
 
   // Send back the successful response.
-  response.status(201);
-  response.send(request.body);
+  // response.status(201);
+  // response.send(request.body);
 });
 
 app.listen(3000);
