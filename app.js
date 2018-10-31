@@ -68,7 +68,7 @@ app.get("/messages", (request, response) => {
 
   User.find()
     .then(users => users.filter(user => user.username != request.query.for))
-    .then(users => otherUsers = users.map(function(user) {
+    .then(users => otherUsers = users.map(function (user) {
       return {
         name: user.username,
         active: user.lastActive > requireActiveSince
