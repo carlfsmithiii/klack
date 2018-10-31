@@ -49,7 +49,9 @@ app.get("/messages", (request, response) => {
   const requireActiveSince = now - 15 * 1000;
 
   // users[request.query.for] = now;
-  User.findOne({username: request.query.for}).then(user => {
+  User.findOne({
+    username: request.query.for
+  }).then(user => {
     if (user) {
       user.lastActive = now;
       user.save();
@@ -58,16 +60,21 @@ app.get("/messages", (request, response) => {
         username: request.query.for,
         lastActive: now
       });
-      user.save(); 
+      user.save();
     }
   });
 
   let otherUsers;
 
-   User.find()
-      .then(users => users.filter(user => user.username != request.query.for))
-      .then(users => otherUsers = users.map(function(user) {return {name: user.username, active: user.lastActive > requireActiveSince}}))
-      .then(_ => Message.find()
+  User.find()
+    .then(users => users.filter(user => user.username != request.query.for))
+    .then(users => otherUsers = users.map(function(user) {
+      return {
+        name: user.username,
+        active: user.lastActive > requireActiveSince
+      };
+    }))
+    .then(_ => Message.find()
       .then(messages => {
         response.send({
           messages: messages.slice(-40),
