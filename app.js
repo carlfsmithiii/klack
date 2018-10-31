@@ -8,9 +8,16 @@ mongoose.Promise = global.Promise;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/klack';
 
 
-mongoose.connect(MONGODB_URI, {useNewUrlParser: true});
+mongoose.connect(MONGODB_URI, {
+  useNewUrlParser: true
+});
 
-const { Message } = require('./models/message');
+const {
+  Message
+} = require('./models/message');
+const {
+  User
+} = require('./models/user');
 
 // List of all messages
 let messages = [];
@@ -32,54 +39,65 @@ function userSortFn(a, b) {
     return 1;
   }
 
-  // names must be equal
   return 0;
 }
 
 app.get("/messages", (request, response) => {
-  // get the current time
   const now = Date.now();
 
   // consider users active if they have connected (GET or POST) in last 15 seconds
   const requireActiveSince = now - 15 * 1000;
 
-  // create a new list of users with a flag indicating whether they have been active recently
-  usersSimple = Object.keys(users).map(x => ({
-    name: x,
-    active: users[x] > requireActiveSince
-  }));
+  // users[request.query.for] = now;
+  User.findOne({username: request.query.for}).then(user => {
+    if (user) {
+      user.lastActive = now;
+      user.save();
+    } else {
+      user = new User({
+        username: request.query.for,
+        lastActive: now
+      });
+      user.save(); 
+    }
+  });
 
-  // sort the list of users alphabetically by name
-  usersSimple.sort(userSortFn);
-  usersSimple.filter(a => a.name !== request.query.for);
+  let otherUsers;
 
-  // update the requesting user's last access time
-  users[request.query.for] = now;
-
-  // send the latest 40 messages and the full user list, annotated with active flags
-  response.send({ messages: messages.slice(-40), users: usersSimple });
+   User.find()
+      .then(users => users.filter(user => user.username != request.query.for))
+      .then(users => otherUsers = users.map(function(user) {return {name: user.username, active: user.lastActive > requireActiveSince}}))
+      .then(_ => Message.find()
+      .then(messages => {
+        response.send({
+          messages: messages.slice(-40),
+          users: otherUsers
+        });
+      }));
 });
 
 app.post("/messages", (request, response) => {
-  // add a timestamp to each incoming message.
   const timestamp = Date.now();
   request.body.timestamp = timestamp;
 
-  console.log('/messages post body: ');
-  console.log(request.body);
-  // append the new message to the message list
-  messages.push(request.body);
-  const message = new Message(request.body);
-  console.log('message', message);
-  message.save().then((doc) => response.status(201).send(doc));
-
-
-  // update the posting user's last access timestamp (so we know they are active)
   users[request.body.sender] = timestamp;
 
-  // Send back the successful response.
-  // response.status(201);
-  // response.send(request.body);
+  User.findOne({
+    username: request.body.sender
+  }).then((user) => {
+    if (!user) {
+      user = new User({
+        username: request.body.sender,
+        lastActive: timestamp
+      });
+      user.save();
+    } else {
+      user.lastActive = timestamp;
+      user.save();
+    }
+  });
+  const message = new Message(request.body);
+  message.save().then((doc) => response.status(201).send(doc));
 });
 
 app.listen(port);

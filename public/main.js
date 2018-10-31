@@ -20,6 +20,7 @@ function appendMessage(msg) {
 
 // redraw the entire list of users, indicating active/inactive
 function listUsers(users) {
+  console.log(users);
   let userStrings = users.map(
     user =>
       user.active
