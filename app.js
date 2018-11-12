@@ -64,23 +64,20 @@ app.get("/messages", (request, response) => {
     }
   });
 
-  let otherUsers;
-
-  User.find()
-    .then(users => users.filter(user => user.username != request.query.for))
-    .then(users => otherUsers = users.map(function (user) {
-      return {
-        name: user.username,
-        active: user.lastActive > requireActiveSince
-      };
-    }))
-    .then(_ => Message.find()
-      .then(messages => {
-        response.send({
-          messages: messages.slice(-40),
-          users: otherUsers
-        });
-      }));
+  Promise.all([User.find(), Message.find()]).then(([users, messages]) => {
+    const otherUsers = users
+      .filter(user => user.username != request.query.for)
+      .map(user => {
+        return {
+          name: user.username,
+          active: user.lastActive > requireActiveSince
+        };
+      });
+    response.send({
+      messages: messages.slice(-40),
+      users: otherUsers
+    });
+  });
 });
 
 app.post("/messages", (request, response) => {
